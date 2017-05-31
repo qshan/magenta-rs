@@ -25,16 +25,24 @@ fi
 
 temp_file_prefix=`basename $0`
 TEMP_FILE=`mktemp -t ${temp_file_prefix}`.h || { echo "Error: Can't create temporary file." >&2; exit 1; }
+destination=$src_dir/generated_definitions.rs
 
 # bindgen $FUCHSIA_SYSROOT/include/magenta/types.h --whitelist-var MX_.* --whitelist-type mx_.* -o $src_dir/magenta_types.rs -- -I$FUCHSIA_SYSROOT/include
 # bindgen $FUCHSIA_SYSROOT/include/magenta/processargs.h --whitelist-var PA.* -o $src_dir/processargs.rs -- -I$FUCHSIA_SYSROOT/include
 # bindgen $FUCHSIA_SYSROOT/include/magenta/process.h --whitelist-function mx_.* -o $src_dir/process.rs -- -I$FUCHSIA_SYSROOT/include
 bindgen $script_dir/all_headers.h \
-    -o $src_dir/generated_bindings.rs \
+    -o $destination \
     --no-layout-tests \
-    --with-derive-default -- \
-    -I$FUCHSIA_SYSROOT/include \
+    --use-core \
+    --with-derive-default \
+    --whitelist-type mx_.* \
+    --whitelist-var PA_.* \
+    --whitelist-var MX_.* \
+    --whitelist-var ERR_.* \
+    --whitelist-function mx_.* \
+    -- -I$FUCHSIA_SYSROOT/include \
     -Wno-unknown-attributes \
     -std=c11
 
+rustfmt --write-mode overwrite $destination
 #rm $TEMP_FILE
